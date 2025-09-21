@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PMIC Control Dashboard</title>
+    <link rel="stylesheet" href="login.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "@vercel/speed-insights": "https://cdn.jsdelivr.net/npm/@vercel/speed-insights@1.0.12/dist/index.js"
+      }
+    }
+    </script>
+</head>
+<body>
+    <div id="login-app">
+        <div class="login-card">
+            <h1>PMIC Dashboard Login</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group-inline">
+                    <input type="checkbox" id="remember-me" name="remember-me">
+                    <label for="remember-me">Remember Me</label>
+                </div>
+                <div class="form-group api-url-container">
+                    <label for="api-url">API Base URL</label>
+                    <div class="api-url-group">
+                        <input type="url" id="api-url" name="api-url" required>
+                        <button type="button" id="update-url-button" title="Save URL for this browser">Save</button>
+                    </div>
+                </div>
+                <p id="error-message" class="error-message hidden">Invalid credentials. Please try again.</p>
+                <button type="submit" id="login-button">Login</button>
+            </form>
+        </div>
+    </div>
+    <script type="module" src="login.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+/* Dark Theme Variables from main app */
+:root {
+    --bg-color: #1a1a2e;
+    --card-bg-color: #16213e;
+    --primary-text-color: #e0fbfc;
+    --secondary-text-color: #9fa8da;
+    --accent-color: #0f3460;
+    --highlight-color: #5372f0;
+    --red-led: #ff3131;
+    --green-led: #39ff14;
+    --font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+@keyframes background-pan {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    color: var(--primary-text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
+    /* Animated Gradient Background */
+    background: linear-gradient(
+        -45deg,
+        #1a1a2e,
+        #0f3460,
+        #16213e,
+        #1a1a2e
+    );
+    background-size: 400% 400%;
+    animation: background-pan 15s ease infinite;
+}
+
+#login-app {
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card {
+    /* Frosted Glass Effect */
+    background-color: rgba(22, 33, 62, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+    animation: fadeInUp 0.8s ease-out;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    color: var(--primary-text-color);
+    font-weight: 500;
+    text-shadow: 0 0 5px rgba(83, 114, 240, 0.3);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: rgba(26, 26, 46, 0.8); /* Slightly transparent */
+    border: 1px solid var(--accent-color);
+    color: var(--primary-text-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--highlight-color);
+    box-shadow: 0 0 8px rgba(83, 114, 240, 0.5);
+}
+
+.form-group-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group-inline label {
+    margin-bottom: 0;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.form-group-inline input[type="checkbox"] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+
+button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+    background-color: #4361e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(83, 114, 240, 0.4);
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.error-message {
+    color: var(--red-led);
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.hidden {
+    display: none;
+}
+
+.api-url-container {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.api-url-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.api-url-group input {
+    flex-grow: 1;
+    margin-bottom: 0; /* Override form-group margin */
+}
+
+#update-url-button {
+    width: auto;
+    padding: 0.75rem 1rem;
+    flex-shrink: 0; /* Prevent button from shrinking */
+    background-color: var(--accent-color);
+    border: 1px solid var(--highlight-color);
+}
+
+#update-url-button:hover {
+    background-color: var(--highlight-color);
+    transform: none; /* Override general button hover transform */
+    box-shadow: none; /* Override general button hover shadow */
+}
+
+#update-url-button.saved {
+    background-color: var(--green-led);
+    cursor: default;
+    border-color: var(--green-led);
+}

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMIC Control Dashboard</title>
+    <link rel="stylesheet" href="index.css">
+    <script>
+        // Security check: Redirect to login if no auth token is found.
+        // This runs before the rest of the page loads to prevent flashing.
+        if (!sessionStorage.getItem('authToken')) {
+            window.location.href = 'login.html';
+        }
+    </script>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://cdn.jsdelivr.net/npm/@google/genai@^1.20.0/dist/index.js",
+    "@vercel/speed-insights": "https://cdn.jsdelivr.net/npm/@vercel/speed-insights@1.0.12/dist/index.js"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>PMIC Control Dashboard</h1>
+            <button id="logout-button">Logout</button>
+        </header>
+        <main>
+            <div class="card controls">
+                <h2>System Control</h2>
+                <div class="control-row">
+                    <label for="pmic-enable">PMIC Enable</label>
+                    <label class="switch" aria-label="PMIC Enable Toggle">
+                        <input type="checkbox" id="pmic-enable" checked>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <button id="reset-button" aria-label="Reset PMIC">Reset PMIC</button>
+            </div>
+            <div class="card status">
+                <h2>Status</h2>
+                <div class="status-indicator" id="status-pg">
+                    <span class="led" role="status" aria-label="Power Good status"></span> Power Good
+                </div>
+                <div class="status-indicator" id="status-ot">
+                    <span class="led" role="status" aria-label="Over Temperature status"></span> Over Temperature
+                </div>
+                <div class="status-indicator" id="status-oc">
+                    <span class="led" role="status" aria-label="Over Current status"></span> Over Current
+                </div>
+            </div>
+            <div class="card voltage-rails">
+                <h2>Voltage Rails</h2>
+                 <div class="profiles" role="group" aria-labelledby="profiles-label">
+                    <h3 id="profiles-label">Voltage Profiles</h3>
+                    <div class="profile-buttons">
+                        <button id="profile-default" class="profile-btn">Default</button>
+                        <button id="profile-saver" class="profile-btn">Power Saver</button>
+                        <button id="profile-performance" class="profile-btn">Performance</button>
+                    </div>
+                </div>
+                <!-- Rail 1 -->
+                <div class="rail">
+                    <label for="vdd-cpu">VDD_CPU</label>
+                    <input type="range" id="vdd-cpu" min="800" max="1500" value="1100" class="voltage-slider" aria-label="VDD_CPU Voltage">
+                    <span class="voltage-value">1.100 V</span>
+                </div>
+                <!-- Rail 2 -->
+                <div class="rail">
+                    <label for="vdd-gpu">VDD_GPU</label>
+                    <input type="range" id="vdd-gpu" min="800" max="1500" value="950" class="voltage-slider" aria-label="VDD_GPU Voltage">
+                    <span class="voltage-value">0.950 V</span>
+                </div>
+                <!-- Rail 3 -->
+                 <div class="rail">
+                    <label for="vdd-mem">VDD_MEM</label>
+                    <input type="range" id="vdd-mem" min="1100" max="1800" value="1200" class="voltage-slider" aria-label="VDD_MEM Voltage">
+                    <span class="voltage-value">1.200 V</span>
+                </div>
+            </div>
+            <div class="card telemetry">
+                 <h2>Telemetry</h2>
+                 <div class="telemetry-item">
+                     <span>Temperature</span>
+                     <span id="temp-value">45 °C</span>
+                 </div>
+                 <div class="telemetry-item">
+                     <span>Current Draw</span>
+                     <span id="current-value">2.5 A</span>
+                 </div>
+            </div>
+             <div class="card ai-suggestion">
+                <h2>AI Suggestion</h2>
+                <div class="ai-prompt-area">
+                    <label for="ai-prompt" class="sr-only">Describe desired power profile</label>
+                    <input type="text" id="ai-prompt" placeholder="e.g., 'Max performance for gaming'">
+                    <button id="get-suggestion-btn">Get Suggestion</button>
+                </div>
+                <div id="ai-loading" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Generating profile...</p>
+                </div>
+                <div id="ai-result" class="hidden">
+                    <h3>Suggested Profile:</h3>
+                    <div id="ai-result-values"></div>
+                    <button id="apply-suggestion-btn">Apply Suggestion</button>
+                </div>
+                <div id="ai-error" class="hidden">
+                    <p>Could not generate a suggestion. Please try again.</p>
+                </div>
+            </div>
+            <div class="card chat">
+                <h2>AI Assistant</h2>
+                <div id="chat-history" role="log" aria-live="polite"></div>
+                <div class="quick-prompts-area" role="toolbar" aria-label="Quick Prompts">
+                    <button class="quick-prompt-btn" data-prompt="What does VDD_CPU control?">What is VDD_CPU?</button>
+                    <button class="quick-prompt-btn" data-prompt="Suggest a balanced profile for everyday use.">Suggest a profile</button>
+                    <button class="quick-prompt-btn" data-prompt="Why is an 'Over Temperature' event dangerous?">Why is Over Temp bad?</button>
+                </div>
+                <div class="chat-input-area">
+                    <label for="chat-input" class="sr-only">Chat with AI Assistant</label>
+                    <input type="text" id="chat-input" placeholder="Ask about the PMIC...">
+                    <button id="send-chat-btn" aria-label="Send Message">Send</button>
+                </div>
+            </div>
+            <div class="card log">
+                <h2>Event Log</h2>
+                <pre id="log-console" role="log" aria-live="polite"></pre>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>

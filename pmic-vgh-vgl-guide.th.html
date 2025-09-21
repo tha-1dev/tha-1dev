@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<title>คู่มือเชิงลึก PMIC – VGH / VGL (ปรับไฟ • Hex/Dec • หน้างาน) — Powered by Thai‑Dev</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#12151a; --ink:#e6eef7; --muted:#9bb1c9;
+    --accent:#1fe0ff; --accent2:#8cf7a6; --warn:#ffd166; --bad:#ff7b7b;
+    --ok:#a0ffa8; --table:#1a1f27; --border:#243142;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:Inter,Segoe UI,Tahoma,Arial,sans-serif; background:var(--bg); color:var(--ink); line-height:1.65}
+  header{padding:28px 20px 12px; background:linear-gradient(180deg,#091017 0%, #0b0d10 70%)}
+  h1{margin:0 0 6px; font-size:28px; color:var(--accent)}
+  header p{margin:0; color:var(--muted)}
+  main{max-width:1080px; margin:0 auto; padding:24px}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px 18px 8px; margin:16px 0; box-shadow:0 4px 18px rgba(0,0,0,.25)}
+  h2{color:var(--accent); margin:6px 0 6px; font-size:22px}
+  h3{color:var(--accent2); margin:10px 0 4px; font-size:18px}
+  p,li{color:var(--ink)}
+  .muted{color:var(--muted)}
+  .kbd{background:#0e1319; border:1px solid var(--border); border-radius:6px; padding:2px 6px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
+  .tag{display:inline-block; background:#0e1319; border:1px solid var(--border); color:var(--muted); padding:2px 8px; border-radius:999px; font-size:12px; margin-right:6px}
+  .warn{border-left:4px solid var(--warn); padding:10px 12px; background:#14171e; margin:10px 0}
+  .ok{border-left:4px solid var(--accent2); padding:10px 12px; background:#111a14; margin:10px 0}
+  .bad{border-left:4px solid var(--bad); padding:10px 12px; background:#1b1313; margin:10px 0}
+  table{width:100%; border-collapse:separate; border-spacing:0; margin:10px 0 18px; background:var(--table); border:1px solid var(--border); border-radius:12px; overflow:hidden}
+  th,td{padding:10px 10px; border-bottom:1px solid var(--border); text-align:center}
+  th{background:#0f141b; color:var(--accent); font-weight:600}
+  tr:last-child td{border-bottom:none}
+  code{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; background:#0e1319; padding:2px 6px; border:1px solid var(--border); border-radius:6px}
+  .grid{display:grid; gap:12px}
+  @media(min-width:880px){ .grid.cols-2{grid-template-columns:1fr 1fr} .grid.cols-3{grid-template-columns:1fr 1fr 1fr} }
+  .footer{margin:30px 0 12px; text-align:center; color:var(--muted); font-size:13px}
+  a{color:#7ee8ff; text-decoration:none} a:hover{text-decoration:underline}
+  .toc a{display:block; padding:6px 10px; border-left:2px solid transparent} .toc a:hover{border-left-color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <h1>คู่มือเชิงลึก PMIC – VGH / VGL</h1>
+  <p>ปรับไฟ • แปลงค่า Hex/Dec • เทคนิคแก้ปัญหาหน้างาน สำหรับช่างซ่อมทีวี | <span class="muted">Powered by Thai‑Dev</span></p>
+</header>
+<main>
+
+<section class="card">
+  <div class="grid cols-2">
+    <div>
+      <h2>สรุปเร็ว (TL;DR)</h2>
+      <ul>
+        <li><b>VGH</b> = Gate High (+) เปิด TFT; ค่าใช้งานทั่วไป 26–36&nbsp;V, เวิร์กจริงมักตั้ง <b>21–24&nbsp;V</b> เพื่อบาลานซ์สว่าง/อายุ</li>
+        <li><b>VGL</b> = Gate Low (−) ปิด TFT; สเปกพื้นฐาน −5 ถึง −8&nbsp;V แต่ <b>งานซ่อมหน้างานนิยม −12 ถึง −18&nbsp;V</b> เพื่อลดเส้นแนวนอนสว่าง</li>
+        <li>หลังซ่อม/รีบอนด์ COF ให้ <b>ลด VGH</b> เพื่อความสว่างสม่ำเสมอ และ <b>เพิ่มความเป็นลบของ VGL</b> เพื่อลดเส้น</li>
+        <li>ค่าคอนฟิกเก็บเป็น <span class="kbd">Hex</span> ใน PMIC/EEPROM (I2C/SPI). <b>แปลง Hex→Dec→แรงดัน</b> ด้วยสเกล/ออฟเซ็ตของรุ่นนั้น ๆ</li>
+      </ul>
+    </div>
+    <div>
+      <h2>ตารางอ้างอิงเร็ว</h2>
+      <table>
+        <tr><th>รายการ</th><th>ช่วงแนะนำ</th><th>หมายเหตุ</th></tr>
+        <tr><td>VGH</td><td>21–24 V</td><td>ลด wear ของ TFT/COF</td></tr>
+        <tr><td>VGL</td><td>−12 ถึง −18 V</td><td>ลด bright horizontal lines</td></tr>
+        <tr><td>VCOM</td><td>ระบุโดยพาแนล</td><td>มีผลต่อโทน/รีเทนชัน</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>1) บทนำ & หน้าที่ของ VGH/VGL</h2>
+  <ul>
+    <li><b>VGH</b> (Gate High): ดันเกตของ TFT ให้อยู่สถานะ <i>ON</i> ระหว่างสแกนเส้น; ยิ่งสูงภาพยิ่งสว่าง/คอนทราสต์ดี แต่เสื่อมเร็ว</li>
+    <li><b>VGL</b> (Gate Low): ดึงเกตให้ <i>OFF</i>; ยิ่งลบมากจะปิดสนิท ลด leakage/เส้นขาว แต่ถ้าลบเกินไปจะเกิดอาการมืด/ขอบเพี้ยน</li>
+    <li>Rails ทั้งสองมักมาจาก PMIC ของ T‑CON/เมนบอร์ด: Charge pump/Boost/Invert พร้อม LDO/สวิตช์คุมลำดับ</li>
+  </ul>
+  <div class="ok"><b>หลักคิด:</b> <u>บาลานซ์</u> ระหว่างคุณภาพภาพ (brightness/line artifacts) กับ <u>อายุพาแนล</u>.</div>
+</section>
+
+<section class="card">
+  <h2>2) ช่วงค่าแรงดัน & ผลกระทบ</h2>
+  <div class="grid cols-2">
+    <div>
+      <h3>VGH</h3>
+      <ul>
+        <li><span class="tag">สเปกทั่วไป</span> 26–36 V</li>
+        <li><span class="tag">การใช้งานจริง</span> 21–24 V (หลังซ่อม/พาแนลเก่า)</li>
+        <li>สูงเกินไป → สว่างดี/เส้นลด แต่เร่ง aging ของ COF/TFT</li>
+        <li>ต่ำเกิน → มัว/เปิดไม่สุด, กรณีจอแบ่งซ้าย‑ขวา ให้ลดเพื่อให้สองฝั่งใกล้กัน</li>
+      </ul>
+    </div>
+    <div>
+      <h3>VGL</h3>
+      <ul>
+        <li><span class="tag">สเปกพื้นฐาน</span> −5…−8 V</li>
+        <li><span class="tag">งานซ่อม</span> −12…−18 V (ลด bright lines)</li>
+        <li>ลบน้อยไป → เส้นแนวนอนสว่าง/เปิดค้างบางจุด</li>
+        <li>ลบมากไป → มืด ขอบดำหนัก, เกิด image sticking ง่ายขึ้น</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>3) การวัด & จุดตรวจ</h2>
+  <ul>
+    <li>วัดที่จุดทดสอบบน T‑CON/PMIC: <span class="kbd">VGH</span>, <span class="kbd">VGL</span>, <span class="kbd">AVDD</span>, <span class="kbd">VCOM</span>, <span class="kbd">VDD</span></li>
+    <li>ตรวจ ripple ด้วยออสซิลโลสโคป (AC coupling, BW limit 20&nbsp;MHz) — ripple &lt; ~50–100&nbsp;mVpp มักยอมรับได้</li>
+    <li>เช็ค ESR/ความจุของ C ออกแรงดันทั้งสองราง, ไดโอดปั๊ม, MOSFET สวิตช์ลำดับ</li>
+  </ul>
+  <div class="warn"><b>ESD & ความปลอดภัย:</b> ใช้สายรัดข้อมือ, หนีบกราวด์พาแนลก่อนวัด. ห้ามลัดช็อตโดยไม่ตั้งใจ — เกต TFT เสียถาวรได้</div>
+</section>
+
+<section class="card">
+  <h2>4) แปลงค่า Hex/Dec → แรงดัน (แนวทางใช้งานจริง)</h2>
+  <p>PMIC เก็บค่าในรีจิสเตอร์/EEPROM เป็น <b>โค้ด</b> (8–16 บิต, บางรุ่น Little‑Endian). สูตรทั่วไปเป็นเชิงเส้น:</p>
+  <p class="ok"><b>V ≈ a × Code + b</b> (a = สเกลโวลต์/LSB, b = ออฟเซ็ต). ค่าจริงขึ้นกับ IC/พาแนล/เฟิร์มแวร์</p>
+  <h3>ตัวอย่างอ้างอิงภาคสนาม (จากงานซ่อม)</h3>
+  <table>
+    <tr><th>สัญญาณ</th><th>ตัวอย่าง Hex</th><th>Dec</th><th>แรงดันวัดได้</th><th>โน้ต</th></tr>
+    <tr><td>VGH</td><td>0x72</td><td>114</td><td>≈ 23.1 V</td><td></td></tr>
+    <tr><td>VGH</td><td>0x7C</td><td>124</td><td>≈ 25.0 V</td><td></td></tr>
+    <tr><td>VGH</td><td>0x96</td><td>150</td><td>≈ 29.8 V</td><td>ใกล้ ~0.20 V/LSB</td></tr>
+    <tr><td>VGL</td><td>0x1E</td><td>30</td><td>≈ −6.5 V</td><td></td></tr>
+    <tr><td>VGL</td><td>0x2E</td><td>46</td><td>≈ −9.3 V</td><td></td></tr>
+    <tr><td>VGL</td><td>0x31</td><td>49</td><td>≈ −10.0 V</td><td></td></tr>
+    <tr><td>VGL</td><td>0x38</td><td>56</td><td>≈ −5.42 V</td><td>บางรุ่นไม่เชิงเส้น</td></tr>
+  </table>
+  <div class="warn"><b>สำคัญ:</b> VGL บางแพลตฟอร์ม <u>ไม่เป็นเส้นตรง</u> (piece‑wise/ตาราง LUT). ให้ทำตารางอ้างอิงจากค่าที่วัดจริงของรุ่นนั้น ๆ</div>
+  <h3>วิธีหา a,b อย่างเร็ว (แนะนำหน้างาน)</h3>
+  <ol>
+    <li>อ่าน <span class="kbd">Code1, Code2</span> จาก EEPROM/รีจิสเตอร์</li>
+    <li>วัดแรงดันจริง <span class="kbd">V1, V2</span></li>
+    <li>คำนวณ <code>a = (V2 − V1) / (Code2 − Code1)</code> และ <code>b = V1 − a×Code1</code></li>
+    <li>ตรวจซ้ำด้วยจุดที่ 3 เพื่อเช็คว่าเป็นเส้นตรงหรือไม่ (หากเพี้ยน ให้ทำ <b>piece‑wise</b>)</li>
+  </ol>
+  <p class="muted">หมายเหตุ: บางรุ่น VGH เป็น u16 Little‑Endian; VGL เป็น s8 (signed). ตรวจชนิดข้อมูลก่อนถอดรหัส</p>
+</section>
+
+<section class="card">
+  <h2>5) เวิร์กโฟลว์ปรับไฟหลังซ่อม/บอนด์ COF</h2>
+  <ol>
+    <li>ตรวจสายแพ/COF/Y‑driver ให้แน่ใจว่าไม่มีช็อต/ฉีก</li>
+    <li>บูตเครื่อง วัดรางไฟทั้งหมด: <span class="kbd">AVDD</span>, <span class="kbd">VGH</span>, <span class="kbd">VGL</span>, <span class="kbd">VCOM</span></li>
+    <li>ตั้งภาพทดสอบ (แนวทแยง/ตารางเทา/ขาวเต็มเฟรม)</li>
+    <li><b>ปรับ VGL</b> ทีละ 0.5–1.0 V (ทิศลบมากขึ้น) จนเส้นสว่างลดลง</li>
+    <li><b>ปรับ VGH</b> ลงทีละ 0.5–1.0 V เพื่อบาลานซ์ความสว่างซ้าย‑ขวา/บน‑ล่าง</li>
+    <li>ปรับละเอียด VCOM เพื่อเกลี่ย mid‑gray/ลดจุดสว่างมุม</li>
+    <li>ทดสอบ aging 20–30 นาที เช็คอุณหภูมิ/เสถียรภาพ</li>
+  </ol>
+  <div class="ok"><b>ทิป:</b> พาแนลเก่า ให้เริ่ม VGH ต่ำกว่าเดิม 2–3 V แล้วไล่ขึ้นทีละน้อย</div>
+</section>
+
+<section class="card">
+  <h2>6) ขั้นตอนอ่าน/เขียนด้วย RT809F (I2C)</h2>
+  <ol>
+    <li>เชื่อมต่อ RT809F ผ่าน USB (ไดรเวอร์ FTDI พร้อม)</li>
+    <li>ต่อ SDA/SCL/GND เข้าจุด I2C ของ PMIC/EEPROM (ตรวจระดับแรงดัน 3.3 V/5 V)</li>
+    <li>อ่านรีจิสเตอร์/EEPROM และบันทึกไฟล์ <span class="kbd">.bin</span> (เวอร์กช็อปนิยมสร้าง GUI ที่สร้าง .bin ให้ RT809F โหลด)</li>
+    <li>ค้นตำแหน่ง <span class="kbd">VGH</span>/<span class="kbd">VGL</span>: ใช้วิธีไล่เทียบค่า (Hex) ↔ แรงดันวัดจริง</li>
+    <li>แก้ค่าอย่างระมัดระวัง ทีละ 1–3 LSB แล้วแฟลชคืน ทดสอบทันที</li>
+  </ol>
+  <div class="warn"><b>สำรองข้อมูลเสมอ:</b> เก็บ <span class="kbd">original.bin</span> และ <span class="kbd">patched.bin</span> พร้อมบันทึกจุด offset/สูตรที่ใช้</div>
+</section>
+
+<section class="card">
+  <h2>7) เทคนิคหน้างาน & เคสจริง</h2>
+  <h3>7.1 Bypass Protection (เพื่อการวัด/ไล่เสีย)</h3>
+  <ul>
+    <li>ชอร์ต/จ่าย 3.3 V ให้สัญญาณที่ล็อกอินเอาต์เป็นบางกรณี เช่น <span class="kbd">FB331 ↔ FB332</span>, <span class="kbd">FB_TRDY1 ↔ FB_TRDY3</span>, <span class="kbd">DC_EN</span> (เฉพาะเพื่อไล่วงจรชั่วคราว)</li>
+    <li class="muted">จบงานแล้วคืนสภาพเดิมทุกจุด</li>
+  </ul>
+  <h3>7.2 เคส: เส้นแนวนอนสว่างหลังบอนด์</h3>
+  <ul>
+    <li>เพิ่มความเป็นลบของ <b>VGL</b> ทีละขั้น → เส้นจะค่อย ๆ จาง</li>
+    <li>ถ้าเกิดมุมมืด/ขอบเพี้ยน ให้ลด VGL กลับเล็กน้อยและปรับ VGH/ VCOM ช่วย</li>
+  </ul>
+  <h3>7.3 เคส: สว่างไม่เท่าซ้าย‑ขวา</h3>
+  <ul>
+    <li>ลด <b>VGH</b> ลงเพื่อดึงสว่างฝั่งเด่นให้ใกล้เคียง</li>
+    <li>ตรวจ COF ด้านสว่างกว่ามักมี leakage สูง</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>8) เมทริกซ์ไดแอกโนสติก (อาการ ↔ แนวทาง)</h2>
+  <table>
+    <tr><th>อาการ</th><th>มีแนวโน้มเกี่ยวกับ</th><th>แนวทางแก้</th></tr>
+    <tr><td>ภาพสว่างล้น/เส้นขาว</td><td>VGL ลบน้อยไป</td><td>เพิ่มลบ VGL (−0.5~−1 V/สเต็ป), ตรวจ ripple/ESR</td></tr>
+    <tr><td>ภาพมัว/มืด</td><td>VGH ต่ำไป</td><td>เพิ่ม VGH เล็กน้อย หรือปรับ VCOM</td></tr>
+    <tr><td>จอไม่ติด ไม่มีภาพ</td><td>VGH/VGL/AVDD ขาด</td><td>เช็ค PMIC enable, ลำดับจ่าย, ไดโอด/มอส/ฟิวส์</td></tr>
+    <tr><td>ริปเปิลสูง</td><td>C เสื่อม/ไดโอดปั๊ม</td><td>เปลี่ยน C ค่าถูกต้อง ESR ต่ำ, ตรวจไดโอด/สวิตช์</td></tr>
+    <tr><td>มุมเพี้ยน/ดำ</td><td>VCOM/สมดุลเกต</td><td>ปรับ VCOM ละเอียดหลังจบ VGH/VGL</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>9) เคล็ดลับคุณภาพ & อายุการใช้งาน</h2>
+  <ul>
+    <li>ลด VGH ลง <b>2–3 V</b> สำหรับพาแนลอายุมาก</li>
+    <li>ไม่ดัน VGL ติดลบสุดโต่งเป็นเวลานาน – เสี่ยงเพี้ยนดำ/รีเทนชัน</li>
+    <li>ใช้ C ออกแรงดันที่ทนอุณหภูมิ/แรงดัน (เช่น 50–63 V ฝั่ง VGH), ESR ต่ำ</li>
+    <li>ตรวจความร้อน PMIC/COF ระหว่าง burn‑in 20–30 นาที</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>10) เชิงเฟิร์มแวร์: หาออฟเซ็ตใน .bin</h2>
+  <ol>
+    <li>ค้นหาแพทเทิร์น u16 LE ที่สัมพันธ์กับแรงดันวัดจริง (เช่น 114→23.1 V, 124→25.0 V, 150→29.8 V)</li>
+    <li>VGL มักเป็น s8/s16; ตรวจสัญญาณ <i>ติดลบ</i> และความเป็น <i>ไม่เชิงเส้น</i></li>
+    <li>ยืนยันด้วยการแก้ทีละ LSB แล้ววัดการเปลี่ยนแปลงบนบอร์ด</li>
+  </ol>
+  <p class="muted">เก็บบันทึก: offset, ชนิดข้อมูล, สูตร a,b หรือ LUT (CSV) ต่อรุ่นพาแนล</p>
+</section>
+
+<section class="card">
+  <h2>11) ตารางอ้างอิง (ภาคสนาม)</h2>
+  <div class="grid cols-2">
+    <div>
+      <h3>VGH (ตัวอย่าง)</h3>
+      <table>
+        <tr><th>Hex</th><th>Dec</th><th>VGH (V)</th></tr>
+        <tr><td>0x72</td><td>114</td><td>≈ 23.1</td></tr>
+        <tr><td>0x7C</td><td>124</td><td>≈ 25.0</td></tr>
+        <tr><td>0x81</td><td>129</td><td>≈ 25.7</td></tr>
+        <tr><td>0x90</td><td>144</td><td>≈ 28.9</td></tr>
+        <tr><td>0x96</td><td>150</td><td>≈ 29.8</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>VGL (ตัวอย่าง)</h3>
+      <table>
+        <tr><th>Hex</th><th>Dec</th><th>VGL (V)</th></tr>
+        <tr><td>0x1E</td><td>30</td><td>≈ −6.5</td></tr>
+        <tr><td>0x2E</td><td>46</td><td>≈ −9.3</td></tr>
+        <tr><td>0x31</td><td>49</td><td>≈ −10.0</td></tr>
+        <tr><td>0x38</td><td>56</td><td>≈ −5.42</td></tr>
+      </table>
+      <div class="warn">แนะนำทำ <b>LUT</b> ของรุ่นที่ซ่อม: วัดจริงทุก 2–4 โค้ด แล้วอินเตอร์โพเลตเป็นเส้นตรงช่วงสั้น ๆ</div>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>12) เช็คลิสต์ก่อนส่งมอบ</h2>
+  <ul>
+    <li>บันทึกค่า VGH/VGL/VCOM สุดท้าย</li>
+    <li>รูปถ่ายจุดซ่อม/COF/คาปาซิเตอร์ที่เปลี่ยน</li>
+    <li>log การเปลี่ยนรีจิสเตอร์/EEPROM (.bin เดิม/ใหม่)</li>
+    <li>ผล burn‑in pattern 20–30 นาที</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>ภาคผนวก: ศัพท์สำคัญ</h2>
+  <table>
+    <tr><th>คำ</th><th>คำอธิบาย</th></tr>
+    <tr><td>AVDD</td><td>แหล่งจ่ายอนาล็อกของซอร์สไดรเวอร์</td></tr>
+    <tr><td>VCOM</td><td>แรงดันอ้างอิงคอมมอนของพาแนล</td></tr>
+    <tr><td>COF</td><td>Chip‑On‑Film (ไดรเวอร์บนฟิล์ม)</td></tr>
+    <tr><td>LUT</td><td>ตารางแมปโค้ด→แรงดัน ใช้เมื่อไม่เชิงเส้น</td></tr>
+  </table>
+</section>
+
+<p class="footer">© Thai‑Dev — คู่มือเชิงลึก PMIC VGH/VGL (ฉบับหน้างาน) • เวอร์ชัน 2025‑09‑20</p>
+
+<!-- === Thai‑Dev Embedded Hex↔Voltage Calculator (VGH/VGL) === -->
+<section class="card" id="thai-dev-calculator">
+  <h2>เครื่องคำนวณ Hex ↔ แรงดันไฟ (VGH/VGL)</h2>
+  <p class="muted">คำนวณเชิงเส้น/คาลิเบรต 2 จุด และ LUT (piece‑wise) — ทำงานออฟไลน์ในหน้านี้ได้ทันที</p>
+  <div class="calc-container">
+
+<section class="card">
+  <h2>โหมดคำนวณหลัก</h2>
+  <div class="row cols-3">
+    <div>
+      <label>สัญญาณ</label>
+      <select id="signal">
+        <option value="VGH">VGH (Gate High, +)</option>
+        <option value="VGL">VGL (Gate Low, −)</option>
+      </select>
+    </div>
+    <div>
+      <label>ขนาดข้อมูล</label>
+      <select id="width">
+        <option value="u8">8‑bit (u8)</option>
+        <option value="s8">8‑bit (s8)</option>
+        <option value="u16le">16‑bit Little‑Endian (u16 LE)</option>
+        <option value="s16le">16‑bit Little‑Endian (s16 LE)</option>
+      </select>
+    </div>
+    <div>
+      <label>โหมดคำนวณ</label>
+      <select id="mode">
+        <option value="linear">เชิงเส้น: V = a×Code + b</option>
+        <option value="lut">LUT (piece‑wise + อินเตอร์โพเลต)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row cols-3" id="linearBox">
+    <div>
+      <label>a (โวลต์/LSB)</label>
+      <input id="a" type="number" step="0.0001" value="0.2000">
+      <div class="hint">ตัวอย่างภาคสนาม VGH ~ 0.20 V/LSB</div>
+    </div>
+    <div>
+      <label>b (ออฟเซ็ตโวลต์)</label>
+      <input id="b" type="number" step="0.001" value="0">
+      <div class="hint">ระบุออฟเซ็ต ถ้าจำเป็น (เช่น −0.2)</div>
+    </div>
+    <div>
+      <label>ทิศค่า VGL</label>
+      <select id="vglPol">
+        <option value="negative">VGL เป็นค่าลบ (ปกติ)</option>
+        <option value="positive">VGL เป็นค่าบวก (กรณีพิเศษ)</option>
+      </select>
+      <div class="hint">มีผลเฉพาะสัญญาณ VGL</div>
+    </div>
+  </div>
+
+  <div id="lutBox" style="display:none">
+    <h3>LUT (วาง CSV: hex,dec(optional),volt[,notes])</h3>
+    <textarea id="lut" placeholder="ตัวอย่าง:
+0x1E,30,-6.5
+0x2E,46,-9.3
+0x31,49,-10.0
+0x38,56,-5.42"></textarea>
+    <div class="hint">ระบบจะใช้คู่ (Code↔Volt) แล้วคำนวณด้วยการอินเตอร์โพเลตเส้นตรงระหว่างจุดที่ใกล้ที่สุด</div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <h3>คำนวณจาก Code → Voltage</h3>
+      <label>Code (Hex เช่น 0x96 หรือ Dec เช่น 150)</label>
+      <input id="codeIn" placeholder="0x96 หรือ 150">
+      <button class="btn primary" onclick="calcVolt()">คำนวณแรงดัน</button>
+      <div id="voltOut" class="out"></div>
+    </div>
+    <div>
+      <h3>ย้อนกลับจาก Voltage → Code</h3>
+      <label>Voltage (V)</label>
+      <input id="voltIn" type="number" step="0.01" placeholder="-10 หรือ 29.8">
+      <button class="btn primary" onclick="calcCode()">คำนวณโค้ด</button>
+      <div id="codeOut" class="out"></div>
+    </div>
+  </div>
+
+  <div class="hint">
+    <span class="pill">Preset เร็ว:</span>
+    <button class="btn" onclick="presetVGH()">VGH (a≈0.20, b≈0)</button>
+    <button class="btn" onclick="presetVGL()">VGL linear เริ่มต้น</button>
+    <button class="btn" onclick="loadSampleLUT()">โหลดตัวอย่าง LUT VGL (ภาคสนาม)</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>คาลิเบรตหา a,b จาก 2 จุด (ภาคสนาม)</h2>
+  <div class="row cols-2">
+    <div>
+      <label>จุดที่ 1 — Code1 (Hex/Dec) & Voltage1 (V)</label>
+      <div class="row cols-2">
+        <input id="c1" placeholder="เช่น 0x72 หรือ 114">
+        <input id="v1" type="number" step="0.01" placeholder="เช่น 23.1">
+      </div>
+    </div>
+    <div>
+      <label>จุดที่ 2 — Code2 (Hex/Dec) & Voltage2 (V)</label>
+      <div class="row cols-2">
+        <input id="c2" placeholder="เช่น 0x96 หรือ 150">
+        <input id="v2" type="number" step="0.01" placeholder="เช่น 29.8">
+      </div>
+    </div>
+  </div>
+  <button class="btn primary" onclick="solveAB()">คำนวณหา a,b</button>
+  <div id="abOut" class="out"></div>
+</section>
+
+<section class="card">
+  <h2>หมายเหตุสำคัญ</h2>
+  <ul>
+    <li>หลายแพลตฟอร์ม <b>VGL ไม่เชิงเส้น</b> — แนะนำใช้ <b>LUT</b> แล้วค่อยอินเตอร์โพเลต</li>
+    <li>ชนิดข้อมูลสำคัญมาก: u8/s8/u16LE/s16LE และ signed/unsigned มีผลกับการถอดรหัส</li>
+    <li>ก่อนเขียนค่าใหม่ ให้สำรองเฟิร์มแวร์/EEPROM ทุกครั้ง</li>
+  </ul>
+</section>
+
+<footer>
+  © Thai‑Dev — Hex↔Voltage Calculator v2025‑09‑20
+</footer>
+
+<script>
+function $(id){ return document.getElementById(id); }
+
+function hexOrDecToInt(txt){
+  if(!txt) return NaN;
+  txt = String(txt).trim();
+  if(/^0x/i.test(txt)) return parseInt(txt,16);
+  if(/^[-+]?\d+$/.test(txt)) return parseInt(txt,10);
+  return NaN;
+}
+
+function parseWidthSignedness(width){
+  return {
+    bits: (width.includes('16')?16:8),
+    signed: width.startsWith('s'),
+    littleEndian: width.includes('le')
+  };
+}
+
+function coerceCode(val, cfg){
+  // Normalize to signed/unsigned range
+  const bits = cfg.bits;
+  const max = (1<<bits)-1;
+  let code = val & max;
+  if(cfg.signed){
+    const signBit = 1<<(bits-1);
+    if(code & signBit){
+      code = code - (1<<bits);
+    }
+  }
+  return code;
+}
+
+function toVoltageLinear(code, signal, a, b, vglPol){
+  let V = a*code + b;
+  if(signal==='VGL' && vglPol==='negative' && V>0) V = -Math.abs(V);
+  return V;
+}
+
+function fromVoltageLinear(V, signal, a, b, vglPol){
+  let target = V;
+  if(signal==='VGL' && vglPol==='negative' && V>0) target = -Math.abs(V);
+  const code = (target - b)/a;
+  return code;
+}
+
+function parseLUT(text){
+  const rows = [];
+  const lines = (text||'').split(/\r?\n/);
+  for(const ln of lines){
+    const t = ln.trim();
+    if(!t || t.startsWith('#')) continue;
+    const parts = t.split(',').map(s=>s.trim());
+    if(parts.length<2) continue;
+    let code = hexOrDecToInt(parts[0]);
+    if(Number.isNaN(code) && parts.length>=2){
+      // if first was hex string invalid, try second as dec
+      code = hexOrDecToInt(parts[1]);
+    }
+    const V = parseFloat(parts[parts.length>=3?2:1]);
+    if(Number.isFinite(code) && Number.isFinite(V)){
+      rows.push({code, V});
+    }
+  }
+  rows.sort((a,b)=>a.code-b.code);
+  return rows;
+}
+
+function interpLUT(code, lut){
+  if(!lut || lut.length===0) return NaN;
+  if(code<=lut[0].code) return lut[0].V;
+  if(code>=lut[lut.length-1].code) return lut[lut.length-1].V;
+  // find segment
+  for(let i=0;i<lut.length-1;i++){
+    const a = lut[i], b = lut[i+1];
+    if(code>=a.code && code<=b.code){
+      const t = (code-a.code)/(b.code-a.code);
+      return a.V + t*(b.V-a.V);
+    }
+  }
+  return NaN;
+}
+
+function invertLUT(V, lut){
+  if(!lut || lut.length===0) return NaN;
+  // monotonic assumption (ใกล้เคียงในช่วงที่สนใจ)
+  // find segment where V lies between
+  for(let i=0;i<lut.length-1;i++){
+    const a = lut[i], b = lut[i+1];
+    const minV = Math.min(a.V,b.V), maxV = Math.max(a.V,b.V);
+    if(V>=minV && V<=maxV){
+      const t = (V-a.V)/(b.V-a.V);
+      return Math.round(a.code + t*(b.code-a.code));
+    }
+  }
+  // clamp to ends
+  if(V<=Math.min(lut[0].V, lut[1]?.V ?? lut[0].V)) return lut[0].code;
+  const L = lut.length-1;
+  if(V>=Math.max(lut[L].V, lut[L-1]?.V ?? lut[L].V)) return lut[L].code;
+  return NaN;
+}
+
+function calcVolt(){
+  const signal = $('signal').value;
+  const width = $('width').value;
+  const cfg = parseWidthSignedness(width);
+  const raw = $('codeIn').value;
+  let code = hexOrDecToInt(raw);
+  if(Number.isNaN(code)){ $('voltOut').textContent = 'กรุณากรอกโค้ดเป็น Hex (0x..) หรือเลขฐานสิบ'; return; }
+  code = coerceCode(code, cfg);
+
+  const mode = $('mode').value;
+  let V = NaN;
+  if(mode==='linear'){
+    const a = parseFloat($('a').value);
+    const b = parseFloat($('b').value);
+    const vglPol = $('vglPol').value;
+    V = toVoltageLinear(code, signal, a, b, vglPol);
+  }else{
+    const lut = parseLUT($('lut').value);
+    V = interpLUT(code, lut);
+  }
+  $('voltOut').textContent = `Code = ${code} → Voltage ≈ ${Number.isFinite(V)?V.toFixed(3):'NaN'} V`;
+}
+
+function calcCode(){
+  const signal = $('signal').value;
+  const width = $('width').value;
+  const cfg = parseWidthSignedness(width);
+  const V = parseFloat($('voltIn').value);
+  if(!Number.isFinite(V)){ $('codeOut').textContent = 'กรุณากรอกแรงดันเป็นตัวเลข'; return; }
+
+  const mode = $('mode').value;
+  let code = NaN;
+  if(mode==='linear'){
+    const a = parseFloat($('a').value);
+    const b = parseFloat($('b').value);
+    const vglPol = $('vglPol').value;
+    code = Math.round(fromVoltageLinear(V, signal, a, b, vglPol));
+  }else{
+    const lut = parseLUT($('lut').value);
+    code = invertLUT(V, lut);
+  }
+  // coerce to width
+  const bits = cfg.bits;
+  const max = (1<<bits)-1;
+  let disp = code;
+  if(cfg.signed){
+    // display as signed range
+    const signBit = 1<<(bits-1);
+    if(code < -(1<<(bits-1))) disp = -(1<<(bits-1));
+    if(code >  ( (1<<(bits-1))-1)) disp =  ( (1<<(bits-1))-1);
+  }else{
+    if(code<0) disp = 0;
+    if(code>max) disp = max;
+  }
+  $('codeOut').textContent = `Voltage ≈ ${V.toFixed(3)} V → Code ≈ ${isFinite(disp)?disp:'NaN'} (dec), ${isFinite(disp)?'0x'+disp.toString(16).toUpperCase():'NaN'} (hex)`;
+}
+
+function solveAB(){
+  const c1 = hexOrDecToInt($('c1').value);
+  const v1 = parseFloat($('v1').value);
+  const c2 = hexOrDecToInt($('c2').value);
+  const v2 = parseFloat($('v2').value);
+  if(Number.isNaN(c1)||Number.isNaN(c2)||!Number.isFinite(v1)||!Number.isFinite(v2) || c1===c2){
+    $('abOut').textContent = 'กรุณากรอกข้อมูล 2 จุดให้ถูกต้อง'; return;
+  }
+  const a = (v2 - v1) / (c2 - c1);
+  const b = v1 - a*c1;
+  $('a').value = a.toFixed(6);
+  $('b').value = b.toFixed(6);
+  $('abOut').textContent = `ผลคาลิเบรต: a = ${a.toFixed(6)} V/LSB, b = ${b.toFixed(6)} V\n(ตั้งค่าให้กับโหมดเชิงเส้นแล้ว)`;
+}
+
+$('mode').addEventListener('change', e=>{
+  const linear = e.target.value==='linear';
+  $('linearBox').style.display = linear?'grid':'none';
+  $('lutBox').style.display = linear?'none':'block';
+});
+
+function presetVGH(){
+  $('signal').value='VGH';
+  $('width').value='u16le';
+  $('mode').value='linear';
+  $('a').value='0.2000';
+  $('b').value='0.0000';
+  $('vglPol').value='negative';
+  $('linearBox').style.display='grid'; $('lutBox').style.display='none';
+}
+
+function presetVGL(){
+  $('signal').value='VGL';
+  $('width').value='s8';
+  $('mode').value='linear';
+  $('a').value='0.2000';
+  $('b').value='0.0000';
+  $('vglPol').value='negative';
+  $('linearBox').style.display='grid'; $('lutBox').style.display='none';
+}
+
+function loadSampleLUT(){
+  $('mode').value='lut';
+  $('linearBox').style.display='none';
+  $('lutBox').style.display='block';
+  $('lut').value = `0x1E,30,-6.5
+0x2E,46,-9.3
+0x31,49,-10.0
+0x38,56,-5.42
+0x3E,62,-12.0
+0x42,66,-13.0
+0x46,70,-14.0
+0x4A,74,-15.0
+0x4E,78,-16.0
+0x52,82,-17.0
+0x56,86,-18.0`;
+}
+</script>
+
+</div>
+</section>
+<!-- Scoped assets for calculator -->
+<div id="calc-assets" style="display:none"></div>
+<script>
+function $(id){ return document.getElementById(id); }
+
+function hexOrDecToInt(txt){
+  if(!txt) return NaN;
+  txt = String(txt).trim();
+  if(/^0x/i.test(txt)) return parseInt(txt,16);
+  if(/^[-+]?\d+$/.test(txt)) return parseInt(txt,10);
+  return NaN;
+}
+
+function parseWidthSignedness(width){
+  return {
+    bits: (width.includes('16')?16:8),
+    signed: width.startsWith('s'),
+    littleEndian: width.includes('le')
+  };
+}
+
+function coerceCode(val, cfg){
+  // Normalize to signed/unsigned range
+  const bits = cfg.bits;
+  const max = (1<<bits)-1;
+  let code = val & max;
+  if(cfg.signed){
+    const signBit = 1<<(bits-1);
+    if(code & signBit){
+      code = code - (1<<bits);
+    }
+  }
+  return code;
+}
+
+function toVoltageLinear(code, signal, a, b, vglPol){
+  let V = a*code + b;
+  if(signal==='VGL' && vglPol==='negative' && V>0) V = -Math.abs(V);
+  return V;
+}
+
+function fromVoltageLinear(V, signal, a, b, vglPol){
+  let target = V;
+  if(signal==='VGL' && vglPol==='negative' && V>0) target = -Math.abs(V);
+  const code = (target - b)/a;
+  return code;
+}
+
+function parseLUT(text){
+  const rows = [];
+  const lines = (text||'').split(/\r?\n/);
+  for(const ln of lines){
+    const t = ln.trim();
+    if(!t || t.startsWith('#')) continue;
+    const parts = t.split(',').map(s=>s.trim());
+    if(parts.length<2) continue;
+    let code = hexOrDecToInt(parts[0]);
+    if(Number.isNaN(code) && parts.length>=2){
+      // if first was hex string invalid, try second as dec
+      code = hexOrDecToInt(parts[1]);
+    }
+    const V = parseFloat(parts[parts.length>=3?2:1]);
+    if(Number.isFinite(code) && Number.isFinite(V)){
+      rows.push({code, V});
+    }
+  }
+  rows.sort((a,b)=>a.code-b.code);
+  return rows;
+}
+
+function interpLUT(code, lut){
+  if(!lut || lut.length===0) return NaN;
+  if(code<=lut[0].code) return lut[0].V;
+  if(code>=lut[lut.length-1].code) return lut[lut.length-1].V;
+  // find segment
+  for(let i=0;i<lut.length-1;i++){
+    const a = lut[i], b = lut[i+1];
+    if(code>=a.code && code<=b.code){
+      const t = (code-a.code)/(b.code-a.code);
+      return a.V + t*(b.V-a.V);
+    }
+  }
+  return NaN;
+}
+
+function invertLUT(V, lut){
+  if(!lut || lut.length===0) return NaN;
+  // monotonic assumption (ใกล้เคียงในช่วงที่สนใจ)
+  // find segment where V lies between
+  for(let i=0;i<lut.length-1;i++){
+    const a = lut[i], b = lut[i+1];
+    const minV = Math.min(a.V,b.V), maxV = Math.max(a.V,b.V);
+    if(V>=minV && V<=maxV){
+      const t = (V-a.V)/(b.V-a.V);
+      return Math.round(a.code + t*(b.code-a.code));
+    }
+  }
+  // clamp to ends
+  if(V<=Math.min(lut[0].V, lut[1]?.V ?? lut[0].V)) return lut[0].code;
+  const L = lut.length-1;
+  if(V>=Math.max(lut[L].V, lut[L-1]?.V ?? lut[L].V)) return lut[L].code;
+  return NaN;
+}
+
+function calcVolt(){
+  const signal = $('signal').value;
+  const width = $('width').value;
+  const cfg = parseWidthSignedness(width);
+  const raw = $('codeIn').value;
+  let code = hexOrDecToInt(raw);
+  if(Number.isNaN(code)){ $('voltOut').textContent = 'กรุณากรอกโค้ดเป็น Hex (0x..) หรือเลขฐานสิบ'; return; }
+  code = coerceCode(code, cfg);
+
+  const mode = $('mode').value;
+  let V = NaN;
+  if(mode==='linear'){
+    const a = parseFloat($('a').value);
+    const b = parseFloat($('b').value);
+    const vglPol = $('vglPol').value;
+    V = toVoltageLinear(code, signal, a, b, vglPol);
+  }else{
+    const lut = parseLUT($('lut').value);
+    V = interpLUT(code, lut);
+  }
+  $('voltOut').textContent = `Code = ${code} → Voltage ≈ ${Number.isFinite(V)?V.toFixed(3):'NaN'} V`;
+}
+
+function calcCode(){
+  const signal = $('signal').value;
+  const width = $('width').value;
+  const cfg = parseWidthSignedness(width);
+  const V = parseFloat($('voltIn').value);
+  if(!Number.isFinite(V)){ $('codeOut').textContent = 'กรุณากรอกแรงดันเป็นตัวเลข'; return; }
+
+  const mode = $('mode').value;
+  let code = NaN;
+  if(mode==='linear'){
+    const a = parseFloat($('a').value);
+    const b = parseFloat($('b').value);
+    const vglPol = $('vglPol').value;
+    code = Math.round(fromVoltageLinear(V, signal, a, b, vglPol));
+  }else{
+    const lut = parseLUT($('lut').value);
+    code = invertLUT(V, lut);
+  }
+  // coerce to width
+  const bits = cfg.bits;
+  const max = (1<<bits)-1;
+  let disp = code;
+  if(cfg.signed){
+    // display as signed range
+    const signBit = 1<<(bits-1);
+    if(code < -(1<<(bits-1))) disp = -(1<<(bits-1));
+    if(code >  ( (1<<(bits-1))-1)) disp =  ( (1<<(bits-1))-1);
+  }else{
+    if(code<0) disp = 0;
+    if(code>max) disp = max;
+  }
+  $('codeOut').textContent = `Voltage ≈ ${V.toFixed(3)} V → Code ≈ ${isFinite(disp)?disp:'NaN'} (dec), ${isFinite(disp)?'0x'+disp.toString(16).toUpperCase():'NaN'} (hex)`;
+}
+
+function solveAB(){
+  const c1 = hexOrDecToInt($('c1').value);
+  const v1 = parseFloat($('v1').value);
+  const c2 = hexOrDecToInt($('c2').value);
+  const v2 = parseFloat($('v2').value);
+  if(Number.isNaN(c1)||Number.isNaN(c2)||!Number.isFinite(v1)||!Number.isFinite(v2) || c1===c2){
+    $('abOut').textContent = 'กรุณากรอกข้อมูล 2 จุดให้ถูกต้อง'; return;
+  }
+  const a = (v2 - v1) / (c2 - c1);
+  const b = v1 - a*c1;
+  $('a').value = a.toFixed(6);
+  $('b').value = b.toFixed(6);
+  $('abOut').textContent = `ผลคาลิเบรต: a = ${a.toFixed(6)} V/LSB, b = ${b.toFixed(6)} V\n(ตั้งค่าให้กับโหมดเชิงเส้นแล้ว)`;
+}
+
+$('mode').addEventListener('change', e=>{
+  const linear = e.target.value==='linear';
+  $('linearBox').style.display = linear?'grid':'none';
+  $('lutBox').style.display = linear?'none':'block';
+});
+
+function presetVGH(){
+  $('signal').value='VGH';
+  $('width').value='u16le';
+  $('mode').value='linear';
+  $('a').value='0.2000';
+  $('b').value='0.0000';
+  $('vglPol').value='negative';
+  $('linearBox').style.display='grid'; $('lutBox').style.display='none';
+}
+
+function presetVGL(){
+  $('signal').value='VGL';
+  $('width').value='s8';
+  $('mode').value='linear';
+  $('a').value='0.2000';
+  $('b').value='0.0000';
+  $('vglPol').value='negative';
+  $('linearBox').style.display='grid'; $('lutBox').style.display='none';
+}
+
+function loadSampleLUT(){
+  $('mode').value='lut';
+  $('linearBox').style.display='none';
+  $('lutBox').style.display='block';
+  $('lut').value = `0x1E,30,-6.5
+0x2E,46,-9.3
+0x31,49,-10.0
+0x38,56,-5.42
+0x3E,62,-12.0
+0x42,66,-13.0
+0x46,70,-14.0
+0x4A,74,-15.0
+0x4E,78,-16.0
+0x52,82,-17.0
+0x56,86,-18.0`;
+}
+</script>
+
+</main>
+</body>
+</html>

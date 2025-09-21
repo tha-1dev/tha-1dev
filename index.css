@@ -1,0 +1,486 @@
+/* Basic Reset & Dark Theme */
+:root {
+    --bg-color: #1a1a2e;
+    --card-bg-color: #16213e;
+    --primary-text-color: #e0fbfc;
+    --secondary-text-color: #9fa8da;
+    --accent-color: #0f3460;
+    --highlight-color: #5372f0;
+    --green-led: #39ff14;
+    --red-led: #ff3131;
+    --amber-led: #ffbf00;
+    --font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--primary-text-color);
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+#app {
+    width: 100%;
+    max-width: 1200px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--primary-text-color);
+}
+
+#logout-button {
+    width: auto;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+    background-color: var(--accent-color);
+    border: 1px solid var(--highlight-color);
+}
+
+#logout-button:hover {
+    background-color: var(--highlight-color);
+}
+
+
+main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+/* Card Styling */
+.card {
+    background-color: var(--card-bg-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.card h2 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--accent-color);
+    padding-bottom: 0.5rem;
+    color: var(--secondary-text-color);
+    font-weight: 500;
+}
+
+/* Controls Card */
+.control-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #4361e0;
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: var(--highlight-color);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--highlight-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+
+/* Status Card */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.led {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background-color: #444; /* Off state */
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+#status-pg .led.on { background-color: var(--green-led); box-shadow: 0 0 8px var(--green-led); }
+#status-ot .led.on { background-color: var(--red-led); box-shadow: 0 0 8px var(--red-led); }
+#status-oc .led.on { background-color: var(--red-led); box-shadow: 0 0 8px var(--red-led); }
+
+
+/* Voltage Rails Card */
+.profiles {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--accent-color);
+    padding-bottom: 1rem;
+}
+
+.profiles h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+}
+
+.profile-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.profile-btn {
+    flex-grow: 1;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    background-color: var(--accent-color);
+    border: 1px solid var(--highlight-color);
+}
+
+.profile-btn:hover {
+    background-color: var(--highlight-color);
+}
+
+.rail {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.voltage-slider {
+    width: 100%;
+    cursor: pointer;
+}
+
+.voltage-slider:disabled {
+    cursor: not-allowed;
+}
+
+.voltage-value {
+    font-family: var(--font-mono);
+    text-align: right;
+    color: var(--primary-text-color);
+}
+
+/* Telemetry Card */
+.telemetry-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+.telemetry-item span:last-child {
+    font-family: var(--font-mono);
+    font-weight: bold;
+}
+
+/* AI Suggestion Card */
+.ai-prompt-area {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+#ai-prompt {
+    flex-grow: 1;
+    background-color: var(--bg-color);
+    border: 1px solid var(--accent-color);
+    color: var(--primary-text-color);
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+#get-suggestion-btn {
+    width: auto;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+#ai-loading {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.spinner {
+    border: 4px solid var(--accent-color);
+    border-top: 4px solid var(--highlight-color);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#ai-result {
+    margin-top: 1rem;
+}
+
+#ai-result h3 {
+    margin-top: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+}
+
+#ai-result-values {
+    background-color: var(--bg-color);
+    padding: 0.75rem;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+#apply-suggestion-btn {
+    background-color: var(--accent-color);
+    border: 1px solid var(--highlight-color);
+}
+
+#apply-suggestion-btn:hover {
+    background-color: var(--highlight-color);
+}
+
+#ai-error {
+    text-align: center;
+    color: var(--red-led);
+}
+
+.hidden {
+    display: none;
+}
+
+
+/* Log Card */
+.log {
+    grid-column: span 1;
+}
+
+#log-console {
+    background-color: var(--bg-color);
+    height: 150px;
+    overflow-y: scroll;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--secondary-text-color);
+    flex-grow: 1; /* Make log fill card height */
+}
+
+/* Chat Card */
+.chat {
+    grid-column: span 2;
+}
+
+#chat-history {
+    flex-grow: 1;
+    height: 250px;
+    overflow-y: auto;
+    background-color: var(--bg-color);
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.chat-message {
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background-color: var(--highlight-color);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+}
+
+.ai-message {
+    background-color: var(--accent-color);
+    color: var(--primary-text-color);
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+}
+
+.typing-indicator {
+    align-self: flex-start;
+    display: flex;
+    gap: 4px;
+    padding: 0.5rem 0.75rem;
+}
+
+.typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background-color: var(--secondary-text-color);
+    border-radius: 50%;
+    animation: typing-blink 1.4s infinite both;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing-blink {
+    0% { opacity: 0.2; }
+    20% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
+
+
+.chat-input-area {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#chat-input {
+    flex-grow: 1;
+    background-color: var(--bg-color);
+    border: 1px solid var(--accent-color);
+    color: var(--primary-text-color);
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+#send-chat-btn {
+    width: auto;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+.quick-prompts-area {
+    margin-bottom: 0.75rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.quick-prompt-btn {
+    width: auto;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    background-color: var(--accent-color);
+    border: 1px solid var(--highlight-color);
+    border-radius: 20px;
+}
+
+.quick-prompt-btn:hover {
+    background-color: var(--highlight-color);
+}
+
+
+/* Responsive adjustment for chat and log */
+@media (max-width: 992px) {
+    .chat {
+        grid-column: span 1;
+    }
+}
